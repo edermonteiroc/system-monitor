@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Info Viewer</title>
+    <script>
+        // Function to fetch tables and populate the dropdown
+        async function loadTables() {
+            let response = await fetch("/tables");
+            let data = await response.json();
+            let select = document.getElementById("tableDropdown");
+
+            if (data.tables) {
+                data.tables.forEach(table => {
+                    let option = document.createElement("option");
+                    option.value = table;
+                    option.textContent = table;
+                    select.appendChild(option);
+                });
+            } else {
+                alert("Error fetching tables: " + data.error);
+            }
+        }
+
+        // Function to fetch and display table data
+        async function fetchTableData() {
+            let tableName = document.getElementById("tableDropdown").value;
+            let response = await fetch(`/systems?table=${tableName}`);
+            let data = await response.json();
+            let table = document.getElementById("dataTable");
+            table.innerHTML = ""; // Clear previous data
+
+            if (data.error) {
+                alert("Error: " + data.error);
+                return;
+            }
+
+            // Create table headers
+            if (data.length > 0) {
+                let headerRow = document.createElement("tr");
+                Object.keys(data[0]).forEach(key => {
+                    let th = document.createElement("th");
+                    th.textContent = key;
+                    headerRow.appendChild(th);
+                });
+                table.appendChild(headerRow);
+
+                // Create table rows
+                data.forEach(row => {
+                    let tr = document.createElement("tr");
+                    Object.values(row).forEach(value => {
+                        let td = document.createElement("td");
+                        td.textContent = value;
+                        tr.appendChild(td);
+                    });
+                    table.appendChild(tr);
+                });
+            } else {
+                table.innerHTML = "<tr><td colspan='100%'>No data available</td></tr>";
+            }
+        }
+
+        // Load tables when the page loads
+        window.onload = loadTables;
+    </script>
+</head>
+<body>
+    <h2>Select a Table to View System Data</h2>
+    <label for="tableDropdown">Select Table:</label>
+    <select id="tableDropdown"></select>
+    <button onclick="fetchTableData()">Load Data</button>
+    <hr>
+    <h3>Table Data</h3>
+    <table border="1" id="dataTable"></table>
+</body>
+</html>
